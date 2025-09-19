@@ -50,14 +50,6 @@ export function useSteam() {
         .insert([materialData])
         .select()
         .single()
-        .then(result => {
-          console.log('Insert promise resolved:', result)
-          return result
-        })
-        .catch(error => {
-          console.log('Insert promise rejected:', error)
-          throw error
-        })
       
       console.log('Insert promise created, starting race...')
 
@@ -69,7 +61,8 @@ export function useSteam() {
         console.log('Starting Promise.race...')
         const result = await Promise.race([insertPromise, timeoutPromise])
         console.log('Promise.race completed, result:', result)
-        const { data, error } = result
+        const response = result as { data: SteamMaterial | null; error: any }
+        const { data, error } = response
 
         const endTime = Date.now()
         console.log('Insert completed in:', endTime - startTime, 'ms')
@@ -88,8 +81,11 @@ export function useSteam() {
         }
 
         console.log('Steam material created successfully:', data)
-        setMaterials(prev => [data, ...prev])
-        return data
+        if (data) {
+          setMaterials(prev => [data, ...prev])
+          return data
+        }
+        return null
       } catch (raceError) {
         console.error('Race error (timeout or other):', raceError)
         console.error('Race error details:', {

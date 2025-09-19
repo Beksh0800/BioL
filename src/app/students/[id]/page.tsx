@@ -22,23 +22,34 @@ interface StudentMaterial {
 }
 
 interface StudentMaterialPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function StudentMaterialPage({ params }: StudentMaterialPageProps) {
   const router = useRouter()
   const [material, setMaterial] = useState<StudentMaterial | null>(null)
   const [loading, setLoading] = useState(true)
+  const [materialId, setMaterialId] = useState<string | null>(null)
 
   useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params
+      setMaterialId(resolvedParams.id)
+    }
+    getParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!materialId) return
+    
     const fetchMaterial = async () => {
       try {
         // Здесь будет запрос к Supabase для получения конкретного материала
         // Пока используем заглушку
         const mockMaterial: StudentMaterial = {
-          id: params.id,
+          id: materialId,
           title: 'Биология негіздері',
           description: 'Жасуша құрылымы және функциялары туралы негізгі түсініктер. Бұл материалда сіз жасушаның құрылымы, органеллалары және олардың функциялары туралы білесіз.',
           theory: 'Жасуша - бұл тірі организмдердің негізгі құрылымдық және функционалдық бірлігі. Жасушалардың екі негізгі түрі бар: прокариоттық және эукариоттық жасушалар.\n\n**Прокариоттық жасушалар:**\n- Ядро мембранасы жоқ\n- ДНК цитоплазмада орналасқан\n- Мысалы: бактериялар\n\n**Эукариоттық жасушалар:**\n- Ядро мембранасы бар\n- ДНК ядро ішінде орналасқан\n- Мысалы: өсімдіктер, жануарлар, адам',
@@ -67,7 +78,7 @@ export default function StudentMaterialPage({ params }: StudentMaterialPageProps
     }
 
     fetchMaterial()
-  }, [params.id])
+  }, [materialId])
 
   const handleDownload = (filename: string) => {
     // Здесь будет логика скачивания файла
@@ -115,8 +126,7 @@ export default function StudentMaterialPage({ params }: StudentMaterialPageProps
       <div className="container mx-auto px-4 py-8">
         {/* Кнопка назад */}
         <div className="mb-6">
-          <Button 
-            variant="outline" 
+          <Button
             onClick={() => router.push('/students')}
             className="mb-4"
           >
@@ -137,7 +147,7 @@ export default function StudentMaterialPage({ params }: StudentMaterialPageProps
                       {material.title}
                     </CardTitle>
                     <div className="flex items-center gap-4 mt-2">
-                      <Badge variant="secondary" className="flex items-center gap-1">
+                      <Badge className="flex items-center gap-1">
                         <GraduationCap className="h-3 w-3" />
                         {material.class_level}-сынып
                       </Badge>
@@ -241,8 +251,6 @@ export default function StudentMaterialPage({ params }: StudentMaterialPageProps
                       <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                         <span className="text-sm text-gray-700 truncate">{file}</span>
                         <Button
-                          size="sm"
-                          variant="outline"
                           onClick={() => handleDownload(file)}
                         >
                           <Download className="h-3 w-3 mr-1" />
@@ -272,8 +280,6 @@ export default function StudentMaterialPage({ params }: StudentMaterialPageProps
                           {getDomainFromUrl(link)}
                         </span>
                         <Button
-                          size="sm"
-                          variant="outline"
                           onClick={() => window.open(link, '_blank', 'noopener,noreferrer')}
                         >
                           <ExternalLink className="h-3 w-3 mr-1" />

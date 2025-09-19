@@ -56,7 +56,8 @@ export function useLabs() {
 
       try {
         const result = await Promise.race([insertPromise, timeoutPromise])
-        const { data, error } = result
+        const response = result as { data: Lab | null; error: any }
+        const { data, error } = response
 
         const endTime = Date.now()
         console.log('Insert completed in:', endTime - startTime, 'ms')
@@ -75,8 +76,11 @@ export function useLabs() {
         }
 
         console.log('Lab created successfully:', data)
-        setLabs(prev => [data, ...prev])
-        return data
+        if (data) {
+          setLabs(prev => [data, ...prev])
+          return data
+        }
+        return null
             } catch (raceError) {
               console.error('Race error (timeout or other):', raceError)
               console.error('Race error details:', {

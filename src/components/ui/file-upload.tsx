@@ -32,46 +32,36 @@ export function FileUploadComponent({
 
   const uploadSingleFile = useCallback(async (fileUpload: FileUpload, index: number) => {
     try {
-      console.log('Starting upload for file:', fileUpload.name, 'at index:', index)
+      console.log('Starting upload for file:', fileUpload.file.name, 'at index:', index)
       
       // Обновляем статус на загрузку
-      onFilesChange(prevFiles => {
-        console.log('Setting status to uploading for index:', index)
-        const updatedFiles = [...prevFiles]
-        updatedFiles[index] = { ...fileUpload, status: 'uploading', progress: 0 }
-        console.log('Updated files after setting uploading:', updatedFiles.map(f => ({ name: f.file.name, status: f.status })))
-        return updatedFiles
-      })
+      const updatedFiles = [...files]
+      updatedFiles[index] = { ...fileUpload, status: 'uploading', progress: 0 }
+      onFilesChange(updatedFiles)
 
       // Загружаем файл в Supabase Storage
       const url = await uploadFile(fileUpload.file, 'labs')
       console.log('File uploaded successfully:', url)
 
       // Успешная загрузка
-      onFilesChange(prevFiles => {
-        console.log('Setting status to completed for index:', index)
-        const finalFiles = [...prevFiles]
-        finalFiles[index] = {
-          ...fileUpload,
-          status: 'completed',
-          progress: 100,
-          url: url
-        }
-        console.log('Final files after completion:', finalFiles.map(f => ({ name: f.file.name, status: f.status, url: f.url })))
-        return finalFiles
-      })
+      const finalFiles = [...files]
+      finalFiles[index] = {
+        ...fileUpload,
+        status: 'completed',
+        progress: 100,
+        url: url
+      }
+      onFilesChange(finalFiles)
 
     } catch (error) {
       console.error('Upload error:', error)
-      onFilesChange(prevFiles => {
-        const errorFiles = [...prevFiles]
-        errorFiles[index] = {
-          ...fileUpload,
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Upload failed'
-        }
-        return errorFiles
-      })
+      const errorFiles = [...files]
+      errorFiles[index] = {
+        ...fileUpload,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Upload failed'
+      }
+      onFilesChange(errorFiles)
     }
   }, [onFilesChange, uploadFile])
 
@@ -180,7 +170,6 @@ export function FileUploadComponent({
             <Button
               onClick={uploadAllFiles}
               disabled={uploading || files.every(f => f.status === 'completed')}
-              size="sm"
             >
               {uploading ? "Загрузка..." : "Загрузить все"}
             </Button>
@@ -206,8 +195,6 @@ export function FileUploadComponent({
                     <div className="flex items-center space-x-2">
                       {fileUpload.status === 'pending' && (
                         <Button
-                          size="sm"
-                          variant="outline"
                           onClick={() => uploadSingleFile(fileUpload, index)}
                           disabled={uploading}
                         >
@@ -238,8 +225,6 @@ export function FileUploadComponent({
                       )}
                       
                       <Button
-                        size="sm"
-                        variant="ghost"
                         onClick={() => removeFile(index)}
                         disabled={fileUpload.status === 'uploading'}
                       >

@@ -105,8 +105,8 @@ export default function AdminTeachersPage() {
   const handleDelete = async (id: string) => {
     if (confirm('Бұл материалды жойғыңыз келе ме?')) {
       try {
-        // Здесь будет запрос к Supabase для удаления материала
-        setMaterials(prev => prev.filter(material => material.id !== id))
+        // Используем функцию deleteMaterial из хука
+        await deleteMaterial(id)
         setFilteredMaterials(prev => prev.filter(material => material.id !== id))
       } catch (error) {
         console.error('Error deleting material:', error)
